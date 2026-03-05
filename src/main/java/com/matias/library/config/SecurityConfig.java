@@ -32,6 +32,13 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/books/**", "/api/genres/**", "/api/libraries/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+
+                        .requestMatchers(HttpMethod.POST, "/api/books/**", "/api/genres/**", "/api/libraries/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/books/**", "/api/genres/**", "/api/libraries/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/books/**", "/api/genres/**", "/api/libraries/**").hasRole("ADMIN")
+
+                        .requestMatchers("/api/loans/**").hasAnyRole("ADMIN", "CLIENT")
+
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider)
