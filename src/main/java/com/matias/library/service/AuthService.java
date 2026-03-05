@@ -4,7 +4,7 @@ import com.matias.library.dto.AuthResponseDTO;
 import com.matias.library.dto.LoginRequestDTO;
 import com.matias.library.dto.RegisterRequestDTO;
 import com.matias.library.exception.ConflictException;
-import com.matias.library.model.Role;
+import com.matias.library.model.enums.Role;
 import com.matias.library.model.User;
 import com.matias.library.repository.UserRepository;
 import com.matias.library.security.JwtService;

@@ -1,5 +1,6 @@
 package com.matias.library.model;
 
+import com.matias.library.model.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import org.jspecify.annotations.NonNull;
