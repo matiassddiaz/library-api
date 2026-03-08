@@ -1,5 +1,6 @@
 package com.matias.library.exception;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -57,13 +58,23 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
-    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
-    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(org.springframework.dao.DataIntegrityViolationException ex) {
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
         ErrorResponse error = new ErrorResponse(
-                "Database integrity error. You might be trying to delete a record that is in use or duplicate a unique value.",
+                ex.getMessage(),
                 HttpStatus.CONFLICT.value(),
                 LocalDateTime.now()
         );
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ErrorResponse> handleForbiddenException(ForbiddenException ex) {
+        ErrorResponse error = new ErrorResponse(
+                ex.getMessage(),
+                HttpStatus.FORBIDDEN.value(),
+                LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
 }

@@ -127,34 +127,6 @@ public class BookService implements IBookService{
 
     @Override
     @Transactional
-    public BookResponseDTO rentBook(Long id) {
-        Book book = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("No book was found using ID:" + id));
-
-        if (book.isRented()) {
-            throw new BadRequestException("Book is already rented.");
-        }
-
-        book.setRented(true);
-        return entityMapper.toDTO(book);
-    }
-
-    @Override
-    @Transactional
-    public BookResponseDTO returnBook(Long id) {
-        Book book = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("No book was found using ID:" + id));
-
-        if (!book.isRented()) {
-            throw new BadRequestException("Book was not rented");
-        }
-
-        book.setRented(false);
-        return entityMapper.toDTO(book);
-    }
-
-    @Override
-    @Transactional
     public BookResponseDTO addGenre(Long id, Long genreId) {
         Book book = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("No book was found using ID:" + id));

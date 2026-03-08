@@ -11,8 +11,6 @@ public interface IBookService {
     PaginatedResponseDTO<BookResponseDTO> getAvailableBooks(int page, int size);
     BookResponseDTO updateBook(Long id, BookRequestDTO dto);
     void deleteBook(Long id);
-    BookResponseDTO rentBook(Long id);
-    BookResponseDTO returnBook(Long id);
     BookResponseDTO addGenre(Long id, Long genreId);
     BookResponseDTO removeGenre(Long id, Long genreId);
 }

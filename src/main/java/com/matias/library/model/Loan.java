@@ -34,9 +34,4 @@ public class Loan {
     @Enumerated(EnumType.STRING)
     private LoanStatus status;
 
-    @PrePersist
-    protected void onCreate() {
-        this.loanDate = LocalDate.now();
-        this.dueDate = LocalDate.now().plusDays(14);
-    }
 }

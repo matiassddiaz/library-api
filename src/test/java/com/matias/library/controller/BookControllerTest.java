@@ -211,59 +211,6 @@ class BookControllerTest {
                 .andExpect(jsonPath("$.status").value(404));
     }
 
-    // ─── PATCH /api/books/{id}/rent ───────────────────────────────────────────
-
-    @Test
-    void rentBook_WhenAvailable_ShouldReturn200WithRentedTrue() throws Exception {
-        BookResponseDTO response = BookResponseDTO.builder().id(1L).title("1984").rented(true).build();
-
-        when(bookService.rentBook(1L)).thenReturn(response);
-
-        mockMvc.perform(patch("/api/books/1/rent"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.rented").value(true));
-    }
-
-    @Test
-    void rentBook_WhenAlreadyRented_ShouldReturn400() throws Exception {
-        when(bookService.rentBook(1L)).thenThrow(new BadRequestException("Book is already rented."));
-
-        mockMvc.perform(patch("/api/books/1/rent"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400));
-    }
-
-    @Test
-    void rentBook_WhenNotFound_ShouldReturn404() throws Exception {
-        when(bookService.rentBook(99L)).thenThrow(new NotFoundException("No book was found using ID: 99"));
-
-        mockMvc.perform(patch("/api/books/99/rent"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404));
-    }
-
-    // ─── PATCH /api/books/{id}/return ─────────────────────────────────────────
-
-    @Test
-    void returnBook_WhenRented_ShouldReturn200WithRentedFalse() throws Exception {
-        BookResponseDTO response = BookResponseDTO.builder().id(1L).title("1984").rented(false).build();
-
-        when(bookService.returnBook(1L)).thenReturn(response);
-
-        mockMvc.perform(patch("/api/books/1/return"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.rented").value(false));
-    }
-
-    @Test
-    void returnBook_WhenNotRented_ShouldReturn400() throws Exception {
-        when(bookService.returnBook(1L)).thenThrow(new BadRequestException("Book was not rented"));
-
-        mockMvc.perform(patch("/api/books/1/return"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400));
-    }
-
     // ─── PATCH /api/books/{id}/genres/{genreId} ───────────────────────────────
 
     @Test

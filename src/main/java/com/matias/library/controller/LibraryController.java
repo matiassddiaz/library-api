@@ -6,6 +6,7 @@ import com.matias.library.dto.PaginatedResponseDTO;
 import com.matias.library.service.ILibraryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +20,7 @@ public class LibraryController {
     private final ILibraryService libraryService;
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<LibraryResponseDTO> createLibrary(@Valid @RequestBody LibraryRequestDTO dto){
         LibraryResponseDTO createdLibrary = libraryService.createLibrary(dto);
         URI location = URI.create("/api/libraries/" + createdLibrary.getId());
@@ -45,6 +47,7 @@ public class LibraryController {
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<Void> deleteLibrary(@PathVariable Long id){
         libraryService.deleteLibrary(id);
         return ResponseEntity.noContent().build();

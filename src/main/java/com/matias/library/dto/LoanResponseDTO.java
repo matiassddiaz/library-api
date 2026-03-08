@@ -18,7 +18,8 @@ public class LoanResponseDTO {
     private String bookTitle;
     private String userEmail;
     private LocalDate loanDate;
+    private LocalDate dueDate;
     private LocalDate returnDate;
-    private LoanStatus status;
+    private String status;
 
 }

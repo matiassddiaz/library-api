@@ -7,6 +7,7 @@ import com.matias.library.dto.PaginatedResponseDTO;
 import com.matias.library.service.IBookService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,20 +53,21 @@ public class BookController {
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<Void> deleteBook(@PathVariable Long id){
         bookService.deleteBook(id);
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/{id}/rent")
-    public ResponseEntity<BookResponseDTO> rentBook(@PathVariable Long id){
-        return ResponseEntity.ok(bookService.rentBook(id));
-    }
-
-    @PatchMapping("/{id}/return")
-    public ResponseEntity<BookResponseDTO> returnBook(@PathVariable Long id){
-        return ResponseEntity.ok(bookService.returnBook(id));
-    }
+//    @PatchMapping("/{id}/rent")
+//    public ResponseEntity<BookResponseDTO> rentBook(@PathVariable Long id){
+//        return ResponseEntity.ok(bookService.rentBook(id));
+//    }
+//
+//    @PatchMapping("/{id}/return")
+//    public ResponseEntity<BookResponseDTO> returnBook(@PathVariable Long id){
+//        return ResponseEntity.ok(bookService.returnBook(id));
+//    }
 
     @PatchMapping("/{id}/genres/{genreId}")
     public ResponseEntity<BookResponseDTO> addGenre(@PathVariable Long id, @PathVariable Long genreId){
