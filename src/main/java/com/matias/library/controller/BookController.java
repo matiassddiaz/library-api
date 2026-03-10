@@ -4,6 +4,8 @@ package com.matias.library.controller;
 import com.matias.library.dto.BookRequestDTO;
 import com.matias.library.dto.BookResponseDTO;
 import com.matias.library.dto.PaginatedResponseDTO;
+import com.matias.library.dto.external.GoogleBooksResponseDTO;
+import com.matias.library.service.ExternalBookService;
 import com.matias.library.service.IBookService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,9 +20,10 @@ import java.net.URI;
 @RequiredArgsConstructor
 public class BookController {
     private final IBookService bookService;
+    private final ExternalBookService externalBookService;
 
     @PostMapping
-    public ResponseEntity<BookResponseDTO> createBook(@Valid @RequestBody BookRequestDTO dto){
+    public ResponseEntity<BookResponseDTO> createBook(@Valid @RequestBody BookRequestDTO dto) {
         BookResponseDTO createdBook = bookService.createBook(dto);
         URI location = URI.create("/api/books/" + createdBook.getId());
         return ResponseEntity.created(location).body(createdBook);
@@ -34,7 +37,7 @@ public class BookController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BookResponseDTO> getBookById(@PathVariable Long id){
+    public ResponseEntity<BookResponseDTO> getBookById(@PathVariable Long id) {
         BookResponseDTO book = bookService.getBookById(id);
         return ResponseEntity.ok(book);
     }
@@ -48,37 +51,29 @@ public class BookController {
 
     @PutMapping("/{id}")
     public ResponseEntity<BookResponseDTO> updateBook(@PathVariable Long id,
-                                                         @Valid @RequestBody BookRequestDTO dto){
+                                                      @Valid @RequestBody BookRequestDTO dto) {
         return ResponseEntity.ok(bookService.updateBook(id, dto));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ResponseEntity<Void> deleteBook(@PathVariable Long id){
+    public ResponseEntity<Void> deleteBook(@PathVariable Long id) {
         bookService.deleteBook(id);
         return ResponseEntity.noContent().build();
     }
 
-//    @PatchMapping("/{id}/rent")
-//    public ResponseEntity<BookResponseDTO> rentBook(@PathVariable Long id){
-//        return ResponseEntity.ok(bookService.rentBook(id));
-//    }
-//
-//    @PatchMapping("/{id}/return")
-//    public ResponseEntity<BookResponseDTO> returnBook(@PathVariable Long id){
-//        return ResponseEntity.ok(bookService.returnBook(id));
-//    }
-
     @PatchMapping("/{id}/genres/{genreId}")
-    public ResponseEntity<BookResponseDTO> addGenre(@PathVariable Long id, @PathVariable Long genreId){
+    public ResponseEntity<BookResponseDTO> addGenre(@PathVariable Long id, @PathVariable Long genreId) {
         return ResponseEntity.ok(bookService.addGenre(id, genreId));
     }
 
     @DeleteMapping("/{id}/genres/{genreId}")
-    public ResponseEntity<BookResponseDTO> removeGenre(@PathVariable Long id, @PathVariable Long genreId){
+    public ResponseEntity<BookResponseDTO> removeGenre(@PathVariable Long id, @PathVariable Long genreId) {
         return ResponseEntity.ok(bookService.removeGenre(id, genreId));
     }
 
-
-
+    @GetMapping("/external/{isbn}")
+    public ResponseEntity<GoogleBooksResponseDTO.VolumeInfo> searchExternalBook(@PathVariable String isbn) {
+        return ResponseEntity.ok(externalBookService.fetchBookByIsbn(isbn));
+    }
 }
