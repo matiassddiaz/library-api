@@ -5,7 +5,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
+
 public interface BookRepository extends JpaRepository<Book, Long> {
-    Page<Book> findByRented(boolean isRented, Pageable pageable);
+    Page<Book> findByStockGreaterThan(int stock, Pageable pageable);
+    Optional<Book> findByIsbn(String isbn);
 }
+
 

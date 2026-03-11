@@ -3,9 +3,11 @@ package com.matias.library.service;
 import com.matias.library.dto.BookRequestDTO;
 import com.matias.library.dto.BookResponseDTO;
 import com.matias.library.dto.PaginatedResponseDTO;
+import com.matias.library.dto.ImportBookRequestDTO;
 
 public interface IBookService {
     BookResponseDTO createBook(BookRequestDTO dto);
+    BookResponseDTO importBook(ImportBookRequestDTO dto);
     PaginatedResponseDTO<BookResponseDTO> getAllBooks(int page, int size);
     BookResponseDTO getBookById(Long id);
     PaginatedResponseDTO<BookResponseDTO> getAvailableBooks(int page, int size);

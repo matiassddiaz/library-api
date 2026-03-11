@@ -2,6 +2,7 @@ package com.matias.library.service;
 
 import com.matias.library.dto.BookRequestDTO;
 import com.matias.library.dto.BookResponseDTO;
+import com.matias.library.dto.ImportBookRequestDTO;
 import com.matias.library.dto.PaginatedResponseDTO;
 import com.matias.library.exception.BadRequestException;
 import com.matias.library.exception.NotFoundException;
@@ -32,6 +33,7 @@ public class BookService implements IBookService{
     private final LibraryRepository libraryRepository;
     private final GenreRepository genreRepository;
     private final EntityMapper entityMapper;
+    private final ExternalBookService externalBookService;
 
     @Override
     @Transactional
@@ -45,6 +47,42 @@ public class BookService implements IBookService{
         }
 
         Book book = entityMapper.toEntity(dto, library, genres);
+        Book savedBook = repository.save(book);
+        return entityMapper.toDTO(savedBook);
+    }
+
+    @Override
+    @Transactional
+    public BookResponseDTO importBook(ImportBookRequestDTO dto) {
+        if (repository.findByIsbn(dto.getIsbn()).isPresent()) {
+            throw new BadRequestException("A book with this ISBN already exists in the inventory.");
+        }
+
+        var googleData = externalBookService.fetchBookByIsbn(dto.getIsbn());
+
+        Library library = libraryRepository.findById(dto.getLibraryId())
+                .orElseThrow(() -> new NotFoundException("No library was found using ID: " + dto.getLibraryId()));
+
+        Set<Genre> genres = new HashSet<>(genreRepository.findAllById(dto.getGenreIds()));
+        if (genres.size() != dto.getGenreIds().size()) {
+            throw new NotFoundException("Some genres were not found");
+        }
+
+        String authors = googleData.getAuthors() != null ? String.join(", ", googleData.getAuthors()) : "Unknown Author";
+        String imageUrl = googleData.getImageLinks() != null ? googleData.getImageLinks().getThumbnail() : null;
+
+        Book book = Book.builder()
+                .isbn(dto.getIsbn())
+                .title(googleData.getTitle() != null ? googleData.getTitle() : "Unknown Title")
+                .author(authors)
+                .synopsis(googleData.getDescription())
+                .publishedDate(googleData.getPublishedDate())
+                .imageUrl(imageUrl)
+                .stock(dto.getStock())
+                .library(library)
+                .genres(genres)
+                .build();
+
         Book savedBook = repository.save(book);
         return entityMapper.toDTO(savedBook);
     }
@@ -82,7 +120,8 @@ public class BookService implements IBookService{
     @Transactional(readOnly = true)
     public PaginatedResponseDTO<BookResponseDTO> getAvailableBooks(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Book> bookPage = repository.findByRented(false, pageable);
+
+        Page<Book> bookPage = repository.findByStockGreaterThan(0, pageable);
 
         List<BookResponseDTO> listOfBooks = bookPage.getContent().stream()
                 .map(entityMapper::toDTO)
@@ -103,12 +142,19 @@ public class BookService implements IBookService{
     public BookResponseDTO updateBook(Long id, BookRequestDTO dto) {
         Book book = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("No book was found using ID:" + id));
+
+        book.setIsbn(dto.getIsbn());
         book.setTitle(dto.getTitle());
         book.setAuthor(dto.getAuthor());
         book.setSynopsis(dto.getSynopsis());
+        book.setPublishedDate(dto.getPublishedDate());
+        book.setImageUrl(dto.getImageUrl());
+        book.setStock(dto.getStock());
+
         Library newLibrary = libraryRepository.findById(dto.getLibraryId())
                 .orElseThrow(() -> new NotFoundException("No library was found using ID: " + dto.getLibraryId()));
         book.setLibrary(newLibrary);
+
         Set<Genre> newGenres = new HashSet<>(genreRepository.findAllById(dto.getGenreIds()));
         if (newGenres.size() != dto.getGenreIds().size())
             throw new NotFoundException("Some genres were not found");

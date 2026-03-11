@@ -1,5 +1,6 @@
 package com.matias.library.dto;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -14,24 +15,13 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class BookRequestDTO {
+public class ImportBookRequestDTO {
 
     @NotBlank(message = "ISBN is mandatory")
     private String isbn;
 
-    @Size(max = 255, message = "Title cannot exceed 255 characters")
-    @NotBlank(message = "Title is mandatory and cannot be blank")
-    private String title;
-
-    @Size(max = 100, message = "Author's name cannot exceed 100 characters")
-    @NotBlank(message = "Author is mandatory")
-    private String author;
-
-    private String synopsis;
-    private String publishedDate;
-    private String imageUrl;
-
     @NotNull(message = "Stock is mandatory")
+    @Min(value = 1, message = "Stock must be at least 1 when importing a new book")
     private Integer stock;
 
     @NotNull(message = "Library ID is mandatory")

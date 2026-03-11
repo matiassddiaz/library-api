@@ -16,17 +16,24 @@ public class Book {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column (nullable = false)
+    @Column(unique = true, nullable = false)
+    private String isbn;
+
+    @Column(nullable = false)
     private String title;
 
-    @Column (length = 100)
+    @Column(length = 100)
     private String author;
 
-    @Column (length = 500)
+    @Column(columnDefinition = "TEXT")
     private String synopsis;
 
-    @Column (nullable = false)
-    private boolean rented;
+    private String publishedDate;
+
+    private String imageUrl;
+
+    @Column(nullable = false)
+    private Integer stock;
 
     @ManyToOne
     @JoinColumn(name = "library_id")
@@ -34,10 +41,9 @@ public class Book {
 
     @ManyToMany
     @JoinTable(
-        name = "book_genres",
-        joinColumns = @JoinColumn(name = "book_id"),
-        inverseJoinColumns = @JoinColumn(name = "genre_id")
+            name = "book_genres",
+            joinColumns = @JoinColumn(name = "book_id"),
+            inverseJoinColumns = @JoinColumn(name = "genre_id")
     )
     private Set<Genre> genres = new HashSet<>();
 }
-

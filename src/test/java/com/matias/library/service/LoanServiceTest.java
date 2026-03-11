@@ -78,13 +78,13 @@ class LoanServiceTest {
         availableBook = Book.builder()
                 .id(10L)
                 .title("1984")
-                .rented(false)
+                .isbn("1111").stock(5)
                 .build();
 
         rentedBook = Book.builder()
                 .id(11L)
                 .title("Brave New World")
-                .rented(true)
+                .isbn("2222").stock(0)
                 .build();
     }
 
@@ -128,7 +128,7 @@ class LoanServiceTest {
         assertEquals("1984", result.getBookTitle());
         assertEquals("client@test.com", result.getUserEmail());
         assertEquals(LoanStatus.ACTIVE.name(), result.getStatus());
-        assertTrue(availableBook.isRented());
+        assertEquals(4, availableBook.getStock());
         verify(bookRepository).save(availableBook);
         verify(loanRepository).save(any(Loan.class));
     }
@@ -304,7 +304,7 @@ class LoanServiceTest {
         assertNotNull(result);
         assertEquals(LoanStatus.RETURNED.name(), result.getStatus());
         assertNotNull(result.getReturnDate());
-        assertFalse(rentedBook.isRented());
+        assertEquals(1, rentedBook.getStock());
         verify(bookRepository).save(rentedBook);
         verify(loanRepository).save(loan);
     }

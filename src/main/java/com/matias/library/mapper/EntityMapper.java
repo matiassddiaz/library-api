@@ -23,10 +23,13 @@ public class EntityMapper {
                 .collect(Collectors.toSet());
         return BookResponseDTO.builder()
                 .id(book.getId())
+                .isbn(book.getIsbn())
                 .title(book.getTitle())
                 .author(book.getAuthor())
                 .synopsis(book.getSynopsis())
-                .rented(book.isRented())
+                .publishedDate(book.getPublishedDate())
+                .imageUrl(book.getImageUrl())
+                .stock(book.getStock())
                 .libraryName(libraryName)
                 .genreNames(genreNames)
                 .build();
@@ -34,12 +37,15 @@ public class EntityMapper {
 
     public Book toEntity(BookRequestDTO dto, Library library, Set<Genre> genres){
         return Book.builder()
+                .isbn(dto.getIsbn())
                 .title(dto.getTitle())
                 .author(dto.getAuthor())
                 .synopsis(dto.getSynopsis())
+                .publishedDate(dto.getPublishedDate())
+                .imageUrl(dto.getImageUrl())
+                .stock(dto.getStock())
                 .library(library)
                 .genres(genres)
-                .rented(false)
                 .build();
     }
 

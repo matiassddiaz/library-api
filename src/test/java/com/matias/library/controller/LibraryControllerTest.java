@@ -6,11 +6,14 @@ import com.matias.library.dto.LibraryResponseDTO;
 import com.matias.library.dto.PaginatedResponseDTO;
 import com.matias.library.exception.ConflictException;
 import com.matias.library.exception.NotFoundException;
+import com.matias.library.security.JwtService;
 import com.matias.library.service.LibraryService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -23,6 +26,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(LibraryController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class LibraryControllerTest {
 
     @Autowired
@@ -30,6 +34,12 @@ class LibraryControllerTest {
 
     @MockitoBean
     private LibraryService libraryService;
+
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private UserDetailsService userDetailsService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 

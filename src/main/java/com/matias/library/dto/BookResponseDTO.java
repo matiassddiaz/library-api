@@ -13,10 +13,13 @@ import java.util.Set;
 @Builder
 public class BookResponseDTO {
     private Long id;
+    private String isbn;
     private String title;
     private String author;
     private String synopsis;
-    private boolean rented;
+    private String publishedDate;
+    private String imageUrl;
+    private Integer stock;
     private String libraryName;
     private Set<String> genreNames;
 }

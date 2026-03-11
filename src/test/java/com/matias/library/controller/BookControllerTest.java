@@ -4,13 +4,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.matias.library.dto.BookRequestDTO;
 import com.matias.library.dto.BookResponseDTO;
 import com.matias.library.dto.PaginatedResponseDTO;
-import com.matias.library.exception.BadRequestException;
 import com.matias.library.exception.NotFoundException;
+import com.matias.library.security.JwtService;
 import com.matias.library.service.BookService;
+import com.matias.library.service.ExternalBookService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -24,6 +27,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(BookController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class BookControllerTest {
 
     @Autowired
@@ -32,6 +36,15 @@ class BookControllerTest {
     @MockitoBean
     private BookService bookService;
 
+    @MockitoBean
+    private ExternalBookService externalBookService;
+
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private UserDetailsService userDetailsService;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     // ─── POST /api/books ──────────────────────────────────────────────────────
@@ -39,8 +52,8 @@ class BookControllerTest {
     @Test
     void createBook_WhenValid_ShouldReturn201WithLocationHeader() throws Exception {
         BookRequestDTO request = BookRequestDTO.builder()
-                .title("1984").author("George Orwell").libraryId(1L).genreIds(Set.of(1L)).build();
-        BookResponseDTO response = BookResponseDTO.builder().id(1L).title("1984").rented(false).build();
+                .title("1984").author("George Orwell").isbn("12345").stock(5).libraryId(1L).genreIds(Set.of(1L)).build();
+        BookResponseDTO response = BookResponseDTO.builder().id(1L).title("1984").isbn("12345").stock(5).build();
 
         when(bookService.createBook(any(BookRequestDTO.class))).thenReturn(response);
 
@@ -56,7 +69,7 @@ class BookControllerTest {
     @Test
     void createBook_WhenTitleIsBlank_ShouldReturn400() throws Exception {
         BookRequestDTO request = BookRequestDTO.builder()
-                .title("").author("Orwell").libraryId(1L).genreIds(Set.of(1L)).build();
+                .title("").author("Orwell").isbn("12345").stock(5).libraryId(1L).genreIds(Set.of(1L)).build();
 
         mockMvc.perform(post("/api/books")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -68,7 +81,7 @@ class BookControllerTest {
     @Test
     void createBook_WhenAuthorIsBlank_ShouldReturn400() throws Exception {
         BookRequestDTO request = BookRequestDTO.builder()
-                .title("1984").author("").libraryId(1L).genreIds(Set.of(1L)).build();
+                .title("1984").author("").isbn("12345").stock(5).libraryId(1L).genreIds(Set.of(1L)).build();
 
         mockMvc.perform(post("/api/books")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -80,7 +93,7 @@ class BookControllerTest {
     @Test
     void createBook_WhenLibraryIdIsNull_ShouldReturn400() throws Exception {
         BookRequestDTO request = BookRequestDTO.builder()
-                .title("1984").author("Orwell").libraryId(null).genreIds(Set.of(1L)).build();
+                .title("1984").author("Orwell").isbn("12345").stock(5).libraryId(null).genreIds(Set.of(1L)).build();
 
         mockMvc.perform(post("/api/books")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -92,7 +105,7 @@ class BookControllerTest {
     @Test
     void createBook_WhenGenreIdsIsEmpty_ShouldReturn400() throws Exception {
         BookRequestDTO request = BookRequestDTO.builder()
-                .title("1984").author("Orwell").libraryId(1L).genreIds(Set.of()).build();
+                .title("1984").author("Orwell").isbn("12345").stock(5).libraryId(1L).genreIds(Set.of()).build();
 
         mockMvc.perform(post("/api/books")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -122,7 +135,7 @@ class BookControllerTest {
 
     @Test
     void getBookById_WhenExists_ShouldReturn200() throws Exception {
-        BookResponseDTO response = BookResponseDTO.builder().id(1L).title("1984").rented(false).build();
+        BookResponseDTO response = BookResponseDTO.builder().id(1L).title("1984").isbn("12345").stock(5).build();
 
         when(bookService.getBookById(1L)).thenReturn(response);
 
@@ -130,7 +143,7 @@ class BookControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.title").value("1984"))
-                .andExpect(jsonPath("$.rented").value(false));
+                .andExpect(jsonPath("$.stock").value(5));
     }
 
     @Test
@@ -146,7 +159,7 @@ class BookControllerTest {
 
     @Test
     void getAvailableBooks_ShouldReturn200WithAvailableBooks() throws Exception {
-        BookResponseDTO dto = BookResponseDTO.builder().id(1L).title("1984").rented(false).build();
+        BookResponseDTO dto = BookResponseDTO.builder().id(1L).isbn("123456").stock(5).title("1984").build();
         PaginatedResponseDTO<BookResponseDTO> paginated = PaginatedResponseDTO.<BookResponseDTO>builder()
                 .content(List.of(dto)).pageNo(0).pageSize(10).totalElements(1).totalPages(1).last(true).build();
 
@@ -154,7 +167,7 @@ class BookControllerTest {
 
         mockMvc.perform(get("/api/books/available").param("page", "0").param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].rented").value(false))
+                .andExpect(jsonPath("$.content[0].stock").value(5))
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
 
@@ -163,7 +176,7 @@ class BookControllerTest {
     @Test
     void updateBook_WhenValid_ShouldReturn200() throws Exception {
         BookRequestDTO request = BookRequestDTO.builder()
-                .title("Updated Title").author("Orwell").libraryId(1L).genreIds(Set.of(1L)).build();
+                .title("Updated Title").author("Orwell").isbn("12345").stock(5).libraryId(1L).genreIds(Set.of(1L)).build();
         BookResponseDTO response = BookResponseDTO.builder().id(1L).title("Updated Title").build();
 
         when(bookService.updateBook(eq(1L), any(BookRequestDTO.class))).thenReturn(response);
@@ -178,7 +191,7 @@ class BookControllerTest {
     @Test
     void updateBook_WhenNotFound_ShouldReturn404() throws Exception {
         BookRequestDTO request = BookRequestDTO.builder()
-                .title("Title").author("Author").libraryId(1L).genreIds(Set.of(1L)).build();
+                .title("Title").author("Author").isbn("12345").stock(5).libraryId(1L).genreIds(Set.of(1L)).build();
 
         when(bookService.updateBook(eq(99L), any(BookRequestDTO.class)))
                 .thenThrow(new NotFoundException("No book was found using ID: 99"));

@@ -23,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -50,10 +49,10 @@ public class LoanService implements ILoanService {
         Book book = bookRepository.findById(request.getBookId())
                 .orElseThrow(() -> new NotFoundException("Book not found with ID: " + request.getBookId()));
 
-        if (book.isRented()) {
-            throw new BadRequestException("The book is currently rented and not available.");
+        if (book.getStock() <= 0) {
+            throw new BadRequestException("There is no stock available for this book.");
         }
-        book.setRented(true);
+        book.setStock(book.getStock() - 1);
         bookRepository.save(book);
 
         Loan loan = Loan.builder()
@@ -127,7 +126,6 @@ public class LoanService implements ILoanService {
     @Transactional
     public LoanResponseDTO returnLoan(Long loanId) {
 
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = getCurrentUser();
         String currentUserEmail = user.getEmail();
 
@@ -148,7 +146,7 @@ public class LoanService implements ILoanService {
         loan.setReturnDate(LocalDate.now());
 
         Book book = loan.getBook();
-        book.setRented(false);
+        book.setStock(book.getStock() + 1);
         bookRepository.save(book);
 
         Loan savedLoan = loanRepository.save(loan);

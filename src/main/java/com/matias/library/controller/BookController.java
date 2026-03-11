@@ -3,6 +3,7 @@ package com.matias.library.controller;
 
 import com.matias.library.dto.BookRequestDTO;
 import com.matias.library.dto.BookResponseDTO;
+import com.matias.library.dto.ImportBookRequestDTO;
 import com.matias.library.dto.PaginatedResponseDTO;
 import com.matias.library.dto.external.GoogleBooksResponseDTO;
 import com.matias.library.service.ExternalBookService;
@@ -27,6 +28,13 @@ public class BookController {
         BookResponseDTO createdBook = bookService.createBook(dto);
         URI location = URI.create("/api/books/" + createdBook.getId());
         return ResponseEntity.created(location).body(createdBook);
+    }
+
+    @PostMapping("/import")
+    public ResponseEntity<BookResponseDTO> importBook(@Valid @RequestBody ImportBookRequestDTO dto) {
+        BookResponseDTO importedBook = bookService.importBook(dto);
+        URI location = URI.create("/api/books/" + importedBook.getId());
+        return ResponseEntity.created(location).body(importedBook);
     }
 
     @GetMapping

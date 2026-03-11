@@ -22,5 +22,13 @@ public class GoogleBooksResponseDTO {
         private List<String> authors;
         private String publishedDate;
         private String description;
+        private ImageLinks imageLinks;
+
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class ImageLinks {
+        private String thumbnail;
     }
 }

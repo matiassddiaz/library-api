@@ -87,7 +87,6 @@ class BookServiceTest {
                 .title("1984").author("Orwell").libraryId(1L).genreIds(Set.of(1L, 2L)).build();
 
         when(libraryRepository.findById(1L)).thenReturn(Optional.of(library));
-        // returns only 1 genre but 2 were requested
         when(genreRepository.findAllById(Set.of(1L, 2L))).thenReturn(List.of(new Genre(1L, "Fiction")));
 
         assertThrows(NotFoundException.class, () -> service.createBook(request));
@@ -156,19 +155,19 @@ class BookServiceTest {
 
     @Test
     void getAvailableBooks_ShouldReturnOnlyAvailableBooks() {
-        Book availableBook = Book.builder().id(1L).title("1984").rented(false).build();
-        BookResponseDTO dto = BookResponseDTO.builder().id(1L).title("1984").rented(false).build();
+        Book availableBook = Book.builder().id(1L).title("1984").isbn("12345").stock(5).build();
+        BookResponseDTO dto = BookResponseDTO.builder().id(1L).title("1984").isbn("12345").stock(5).build();
         Pageable pageable = PageRequest.of(0, 10);
         Page<Book> page = new PageImpl<>(List.of(availableBook), pageable, 1);
 
-        when(repository.findByRented(false, pageable)).thenReturn(page);
+        when(repository.findByStockGreaterThan(0, pageable)).thenReturn(page);
         when(mapper.toDTO(availableBook)).thenReturn(dto);
 
         PaginatedResponseDTO<BookResponseDTO> result = service.getAvailableBooks(0, 10);
 
         assertNotNull(result);
         assertEquals(1, result.getContent().size());
-        assertFalse(result.getContent().get(0).isRented());
+        assertTrue(result.getContent().get(0).getStock() > 0);
     }
 
     // ─── updateBook ───────────────────────────────────────────────────────────
