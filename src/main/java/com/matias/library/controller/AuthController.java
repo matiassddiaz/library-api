@@ -4,6 +4,8 @@ import com.matias.library.dto.AuthResponseDTO;
 import com.matias.library.dto.LoginRequestDTO;
 import com.matias.library.dto.RegisterRequestDTO;
 import com.matias.library.service.AuthService;
+import com.matias.library.service.IAuthService;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,10 +17,11 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthService authService;
+    private final IAuthService authService;
 
     @PostMapping("/register")
-    @ResponseStatus(HttpStatus.CREATED)
+    @ApiResponse(responseCode = "201", description = "User successfully registered")
+
     public ResponseEntity<AuthResponseDTO> register(@Valid @RequestBody RegisterRequestDTO request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
     }

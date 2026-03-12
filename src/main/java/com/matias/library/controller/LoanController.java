@@ -3,12 +3,14 @@ package com.matias.library.controller;
 import com.matias.library.dto.LoanRequestDTO;
 import com.matias.library.dto.LoanResponseDTO;
 import com.matias.library.service.ILoanService;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -19,10 +21,11 @@ public class LoanController {
     private final ILoanService service;
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
+    @ApiResponse(responseCode = "201", description = "Loan successfully created")
     public ResponseEntity<LoanResponseDTO> createLoan(@Valid @RequestBody LoanRequestDTO request) {
         LoanResponseDTO response = service.createLoan(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        URI location = URI.create("/api/loans/" + response.getId());
+        return ResponseEntity.created(location).body(response);
     }
 
     @GetMapping("/me")

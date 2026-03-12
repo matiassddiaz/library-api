@@ -179,8 +179,7 @@ public class BookService implements IBookService{
         Genre genre = genreRepository.findById(genreId)
                 .orElseThrow(() -> new NotFoundException("No genre was found using ID:" + genreId));
         book.getGenres().add(genre);
-        Book savedBook = repository.save(book);
-        return entityMapper.toDTO(savedBook);
+        return entityMapper.toDTO(book);
     }
 
     @Override

@@ -4,6 +4,7 @@ import com.matias.library.dto.GenreRequestDTO;
 import com.matias.library.dto.GenreResponseDTO;
 import com.matias.library.dto.PaginatedResponseDTO;
 import com.matias.library.service.IGenreService;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,7 +21,7 @@ public class GenreController {
     private final IGenreService genreService;
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
+    @ApiResponse(responseCode = "201", description = "Genre successfully created")
     public ResponseEntity<GenreResponseDTO> createGenre(@Valid @RequestBody GenreRequestDTO dto){
         GenreResponseDTO createdGenre = genreService.createGenre(dto);
         URI location = URI.create("/api/genres/" + createdGenre.getId());
@@ -47,8 +48,7 @@ public class GenreController {
     }
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ResponseEntity<Void> deleteGenre (@PathVariable Long id){
+    @ApiResponse(responseCode = "204", description = "Genre successfully deleted")    public ResponseEntity<Void> deleteGenre (@PathVariable Long id){
         genreService.deleteGenre(id);
         return ResponseEntity.noContent().build();
     }

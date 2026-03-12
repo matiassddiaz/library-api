@@ -21,7 +21,7 @@ public class ImportBookRequestDTO {
     private String isbn;
 
     @NotNull(message = "Stock is mandatory")
-    @Min(value = 1, message = "Stock must be at least 1 when importing a new book")
+    @Min(value = 0, message = "Stock cannot be negative")
     private Integer stock;
 
     @NotNull(message = "Library ID is mandatory")

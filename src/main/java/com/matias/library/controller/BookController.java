@@ -8,9 +8,9 @@ import com.matias.library.dto.PaginatedResponseDTO;
 import com.matias.library.dto.external.GoogleBooksResponseDTO;
 import com.matias.library.service.ExternalBookService;
 import com.matias.library.service.IBookService;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +24,7 @@ public class BookController {
     private final ExternalBookService externalBookService;
 
     @PostMapping
+    @ApiResponse(responseCode = "201", description = "Book successfully created")
     public ResponseEntity<BookResponseDTO> createBook(@Valid @RequestBody BookRequestDTO dto) {
         BookResponseDTO createdBook = bookService.createBook(dto);
         URI location = URI.create("/api/books/" + createdBook.getId());
@@ -31,6 +32,7 @@ public class BookController {
     }
 
     @PostMapping("/import")
+    @ApiResponse(responseCode = "201", description = "Book successfully imported")
     public ResponseEntity<BookResponseDTO> importBook(@Valid @RequestBody ImportBookRequestDTO dto) {
         BookResponseDTO importedBook = bookService.importBook(dto);
         URI location = URI.create("/api/books/" + importedBook.getId());
@@ -64,7 +66,7 @@ public class BookController {
     }
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ApiResponse(responseCode = "204", description = "Book successfully deleted")
     public ResponseEntity<Void> deleteBook(@PathVariable Long id) {
         bookService.deleteBook(id);
         return ResponseEntity.noContent().build();

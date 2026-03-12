@@ -36,7 +36,6 @@ public class LoanService implements ILoanService {
     public LoanResponseDTO createLoan(LoanRequestDTO request) {
 
         User user = getCurrentUser();
-        String currentUserEmail = user.getEmail();
 
         boolean hasOverdueBooks = loanRepository.existsByUserAndStatusAndDueDateBefore(
                 user, LoanStatus.ACTIVE, LocalDate.now()

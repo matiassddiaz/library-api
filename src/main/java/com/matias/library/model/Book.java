@@ -35,6 +35,9 @@ public class Book {
     @Column(nullable = false)
     private Integer stock;
 
+    @Version
+    private Long version;
+
     @ManyToOne
     @JoinColumn(name = "library_id")
     private Library library;
@@ -46,4 +49,5 @@ public class Book {
             inverseJoinColumns = @JoinColumn(name = "genre_id")
     )
     private Set<Genre> genres = new HashSet<>();
+
 }
