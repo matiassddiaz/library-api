@@ -21,7 +21,6 @@ import java.net.URI;
 @RequiredArgsConstructor
 public class BookController {
     private final IBookService bookService;
-    private final ExternalBookService externalBookService;
 
     @PostMapping
     @ApiResponse(responseCode = "201", description = "Book successfully created")
@@ -84,6 +83,5 @@ public class BookController {
 
     @GetMapping("/external/{isbn}")
     public ResponseEntity<GoogleBooksResponseDTO.VolumeInfo> searchExternalBook(@PathVariable String isbn) {
-        return ResponseEntity.ok(externalBookService.fetchBookByIsbn(isbn));
-    }
+        return ResponseEntity.ok(bookService.searchExternalBook(isbn));    }
 }

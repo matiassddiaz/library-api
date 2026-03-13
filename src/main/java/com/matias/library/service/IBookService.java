@@ -4,6 +4,7 @@ import com.matias.library.dto.BookRequestDTO;
 import com.matias.library.dto.BookResponseDTO;
 import com.matias.library.dto.PaginatedResponseDTO;
 import com.matias.library.dto.ImportBookRequestDTO;
+import com.matias.library.dto.external.GoogleBooksResponseDTO;
 
 public interface IBookService {
     BookResponseDTO createBook(BookRequestDTO dto);
@@ -15,4 +16,5 @@ public interface IBookService {
     void deleteBook(Long id);
     BookResponseDTO addGenre(Long id, Long genreId);
     BookResponseDTO removeGenre(Long id, Long genreId);
+    GoogleBooksResponseDTO.VolumeInfo searchExternalBook(String isbn);
 }

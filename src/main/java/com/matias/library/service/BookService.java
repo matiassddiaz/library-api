@@ -4,6 +4,7 @@ import com.matias.library.dto.BookRequestDTO;
 import com.matias.library.dto.BookResponseDTO;
 import com.matias.library.dto.ImportBookRequestDTO;
 import com.matias.library.dto.PaginatedResponseDTO;
+import com.matias.library.dto.external.GoogleBooksResponseDTO;
 import com.matias.library.exception.BadRequestException;
 import com.matias.library.exception.NotFoundException;
 import com.matias.library.mapper.EntityMapper;
@@ -197,6 +198,11 @@ public class BookService implements IBookService{
         book.getGenres().remove(genre);
 
         return entityMapper.toDTO(book);
+    }
+
+    @Override
+    public GoogleBooksResponseDTO.VolumeInfo searchExternalBook(String isbn) {
+        return externalBookService.fetchBookByIsbn(isbn);
     }
 
 

@@ -4,6 +4,7 @@ import com.matias.library.dto.*;
 import com.matias.library.model.Book;
 import com.matias.library.model.Genre;
 import com.matias.library.model.Library;
+import com.matias.library.model.Loan;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -77,6 +78,20 @@ public class EntityMapper {
     public Genre toEntity(GenreRequestDTO dto){
         return Genre.builder()
                 .name(dto.getName())
+                .build();
+    }
+
+    public LoanResponseDTO toDTO(Loan loan){
+        if (loan == null) return null;
+
+        return LoanResponseDTO.builder()
+                .id(loan.getId())
+                .bookTitle(loan.getBook().getTitle())
+                .userEmail(loan.getUser().getEmail())
+                .loanDate(loan.getLoanDate())
+                .dueDate(loan.getDueDate())
+                .returnDate(loan.getReturnDate())
+                .status(loan.getStatus().name())
                 .build();
     }
 }

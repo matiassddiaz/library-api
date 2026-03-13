@@ -10,5 +10,7 @@ import java.util.List;
 
 public interface LoanRepository extends JpaRepository<Loan, Long> {
     boolean existsByUserAndStatusAndDueDateBefore(User user, LoanStatus status, LocalDate currentDate);
+    boolean existsByUserAndStatus(User user, LoanStatus status);
     List<Loan> findByUserOrderByLoanDateDesc(User user);
+    List<Loan> findByStatusAndDueDateBefore(LoanStatus status, LocalDate date);
 }

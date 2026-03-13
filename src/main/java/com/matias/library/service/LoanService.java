@@ -6,6 +6,7 @@ import com.matias.library.dto.PaginatedResponseDTO;
 import com.matias.library.exception.BadRequestException;
 import com.matias.library.exception.ForbiddenException;
 import com.matias.library.exception.NotFoundException;
+import com.matias.library.mapper.EntityMapper;
 import com.matias.library.model.Book;
 import com.matias.library.model.Loan;
 import com.matias.library.model.enums.LoanStatus;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +32,7 @@ public class LoanService implements ILoanService {
     private final LoanRepository loanRepository;
     private final BookRepository bookRepository;
     private final UserRepository userRepository;
+    private final EntityMapper entityMapper;
 
     @Override
     @Transactional
@@ -37,12 +40,13 @@ public class LoanService implements ILoanService {
 
         User user = getCurrentUser();
 
-        boolean hasOverdueBooks = loanRepository.existsByUserAndStatusAndDueDateBefore(
-                user, LoanStatus.ACTIVE, LocalDate.now()
-        );
+        LocalDate today = LocalDate.now();
 
-        if (hasOverdueBooks) {
-            throw new BadRequestException("User has overdue books and cannot rent new ones.");
+        boolean hasOverdueStatus = loanRepository.existsByUserAndStatus(user, LoanStatus.OVERDUE);
+        boolean hasActiveButExpired = loanRepository.existsByUserAndStatusAndDueDateBefore(user, LoanStatus.ACTIVE, today);
+
+        if (hasOverdueStatus || hasActiveButExpired) {
+            throw new BadRequestException("User has overdue books and cannot borrow new ones.");
         }
 
         Book book = bookRepository.findById(request.getBookId())
@@ -64,14 +68,7 @@ public class LoanService implements ILoanService {
 
         Loan savedLoan = loanRepository.save(loan);
 
-        return LoanResponseDTO.builder()
-                .id(savedLoan.getId())
-                .bookTitle(book.getTitle())
-                .userEmail(user.getEmail())
-                .loanDate(savedLoan.getLoanDate())
-                .dueDate(savedLoan.getDueDate())
-                .status(savedLoan.getStatus().name())
-                .build();
+        return entityMapper.toDTO(savedLoan);
     }
 
     @Override
@@ -82,16 +79,9 @@ public class LoanService implements ILoanService {
 
         List<Loan> loans = loanRepository.findByUserOrderByLoanDateDesc(user);
 
-        return loans.stream().map(loan -> LoanResponseDTO.builder()
-                .id(loan.getId())
-                .bookTitle(loan.getBook().getTitle())
-                .userEmail(user.getEmail())
-                .loanDate(loan.getLoanDate())
-                .dueDate(loan.getDueDate())
-                .returnDate(loan.getReturnDate())
-                .status(loan.getStatus().name())
-                .build()
-        ).toList();
+        return loans.stream()
+                .map(entityMapper::toDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -100,16 +90,9 @@ public class LoanService implements ILoanService {
         Pageable pageable = PageRequest.of(page, size);
         Page<Loan> loanPage = loanRepository.findAll(pageable);
 
-        List<LoanResponseDTO> content = loanPage.getContent().stream().map(loan -> LoanResponseDTO.builder()
-                .id(loan.getId())
-                .bookTitle(loan.getBook().getTitle())
-                .userEmail(loan.getUser().getEmail())
-                .loanDate(loan.getLoanDate())
-                .dueDate(loan.getDueDate())
-                .returnDate(loan.getReturnDate())
-                .status(loan.getStatus().name())
-                .build()
-        ).toList();
+        List<LoanResponseDTO> content = loanPage.getContent().stream()
+                .map(entityMapper::toDTO)
+                .collect(Collectors.toList());
 
         return PaginatedResponseDTO.<LoanResponseDTO>builder()
                 .content(content)
@@ -148,17 +131,7 @@ public class LoanService implements ILoanService {
         book.setStock(book.getStock() + 1);
         bookRepository.save(book);
 
-        Loan savedLoan = loanRepository.save(loan);
-
-        return LoanResponseDTO.builder()
-                .id(savedLoan.getId())
-                .bookTitle(book.getTitle())
-                .userEmail(loan.getUser().getEmail())
-                .loanDate(savedLoan.getLoanDate())
-                .dueDate(savedLoan.getDueDate())
-                .returnDate(savedLoan.getReturnDate())
-                .status(savedLoan.getStatus().name())
-                .build();
+        return entityMapper.toDTO(loan);
     }
 
     private User getCurrentUser() {
