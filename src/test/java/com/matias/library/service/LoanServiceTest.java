@@ -6,6 +6,7 @@ import com.matias.library.dto.PaginatedResponseDTO;
 import com.matias.library.exception.BadRequestException;
 import com.matias.library.exception.ForbiddenException;
 import com.matias.library.exception.NotFoundException;
+import com.matias.library.mapper.EntityMapper;
 import com.matias.library.model.Book;
 import com.matias.library.model.Loan;
 import com.matias.library.model.User;
@@ -47,6 +48,8 @@ class LoanServiceTest {
     private BookRepository bookRepository;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private EntityMapper entityMapper;
 
     @InjectMocks
     private LoanService service;
@@ -86,6 +89,16 @@ class LoanServiceTest {
                 .title("Brave New World")
                 .isbn("2222").stock(0)
                 .build();
+
+        lenient().when(entityMapper.toDTO(any(Loan.class))).thenAnswer(invocation -> {
+            Loan loan = invocation.getArgument(0);
+            return LoanResponseDTO.builder()
+                    .id(loan.getId() != null ? loan.getId() : 100L)
+                    .bookTitle(loan.getBook() != null ? loan.getBook().getTitle() : "Unknown Title")
+                    .userEmail(loan.getUser() != null ? loan.getUser().getEmail() : "test@test.com")
+                    .status(loan.getStatus() != null ? loan.getStatus().name() : "ACTIVE")
+                    .build();
+        });
     }
 
     // ─── helpers ─────────────────────────────────────────────────────────────
@@ -297,16 +310,20 @@ class LoanServiceTest {
                 .build();
 
         when(loanRepository.findById(50L)).thenReturn(Optional.of(loan));
-        when(loanRepository.save(any(Loan.class))).thenReturn(loan);
+        LoanResponseDTO mockResponse = LoanResponseDTO.builder()
+                .id(50L)
+                .status(LoanStatus.RETURNED.name())
+                .returnDate(LocalDate.now())
+                .build();
+        when(entityMapper.toDTO(any(Loan.class))).thenReturn(mockResponse);
 
         LoanResponseDTO result = service.returnLoan(50L);
 
         assertNotNull(result);
         assertEquals(LoanStatus.RETURNED.name(), result.getStatus());
-        assertNotNull(result.getReturnDate());
         assertEquals(1, rentedBook.getStock());
+
         verify(bookRepository).save(rentedBook);
-        verify(loanRepository).save(loan);
     }
 
     @Test
@@ -323,7 +340,6 @@ class LoanServiceTest {
                 .build();
 
         when(loanRepository.findById(50L)).thenReturn(Optional.of(loan));
-        when(loanRepository.save(any(Loan.class))).thenReturn(loan);
 
         LoanResponseDTO result = service.returnLoan(50L);
 

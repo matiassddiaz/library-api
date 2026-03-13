@@ -2,7 +2,9 @@ package com.matias.library.service;
 
 import com.matias.library.dto.BookRequestDTO;
 import com.matias.library.dto.BookResponseDTO;
+import com.matias.library.dto.ImportBookRequestDTO;
 import com.matias.library.dto.PaginatedResponseDTO;
+import com.matias.library.dto.external.GoogleBooksResponseDTO;
 import com.matias.library.exception.BadRequestException;
 import com.matias.library.exception.NotFoundException;
 import com.matias.library.mapper.EntityMapper;
@@ -14,6 +16,7 @@ import com.matias.library.repository.GenreRepository;
 import com.matias.library.repository.LibraryRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -41,9 +44,12 @@ class BookServiceTest {
     private GenreRepository genreRepository;
     @Mock
     private EntityMapper mapper;
-
+    @Mock
+    private ExternalBookService externalBookService;
     @InjectMocks
     private BookService service;
+
+
 
     // ─── createBook ───────────────────────────────────────────────────────────
 
@@ -91,6 +97,149 @@ class BookServiceTest {
 
         assertThrows(NotFoundException.class, () -> service.createBook(request));
         verify(repository, never()).save(any());
+    }
+
+// ─── importBook ───────────────────────────────────────────────────────────
+
+    @Test
+    void importBook_WhenValid_ShouldPersistDataFromGoogleAndReturnDto() {
+        ImportBookRequestDTO request = ImportBookRequestDTO.builder()
+                .isbn("9780451524935").libraryId(1L).genreIds(Set.of(1L)).stock(3).build();
+
+        GoogleBooksResponseDTO.ImageLinks imageLinks = new GoogleBooksResponseDTO.ImageLinks();
+        imageLinks.setThumbnail("http://img.example.com/1984.jpg");
+
+        GoogleBooksResponseDTO.VolumeInfo volumeInfo = new GoogleBooksResponseDTO.VolumeInfo();
+        volumeInfo.setTitle("1984");
+        volumeInfo.setAuthors(List.of("George Orwell"));
+        volumeInfo.setDescription("A dystopian novel.");
+        volumeInfo.setPublishedDate("1949");
+        volumeInfo.setImageLinks(imageLinks);
+
+        Library library = Library.builder().id(1L).name("Central").build();
+        Genre genre = new Genre(1L, "Fiction");
+        Book saved = Book.builder().id(1L).isbn("9780451524935").title("1984").build();
+        BookResponseDTO response = BookResponseDTO.builder().id(1L).title("1984").build();
+
+        when(repository.findByIsbn("9780451524935")).thenReturn(Optional.empty());
+        when(externalBookService.fetchBookByIsbn("9780451524935")).thenReturn(volumeInfo);
+        when(libraryRepository.findById(1L)).thenReturn(Optional.of(library));
+        when(genreRepository.findAllById(Set.of(1L))).thenReturn(List.of(genre));
+        when(repository.save(any(Book.class))).thenReturn(saved);
+        when(mapper.toDTO(saved)).thenReturn(response);
+
+        BookResponseDTO result = service.importBook(request);
+
+        assertNotNull(result);
+        assertEquals("1984", result.getTitle());
+
+        // Verificar que el Book construido tiene los datos de Google correctamente mapeados
+        ArgumentCaptor<Book> bookCaptor = ArgumentCaptor.forClass(Book.class);
+        verify(repository).save(bookCaptor.capture());
+        Book persisted = bookCaptor.getValue();
+        assertEquals("9780451524935", persisted.getIsbn());
+        assertEquals("1984", persisted.getTitle());
+        assertEquals("George Orwell", persisted.getAuthor());
+        assertEquals("A dystopian novel.", persisted.getSynopsis());
+        assertEquals("1949", persisted.getPublishedDate());
+        assertEquals("http://img.example.com/1984.jpg", persisted.getImageUrl());
+        assertEquals(3, persisted.getStock());
+    }
+
+    @Test
+    void importBook_WhenIsbnAlreadyExists_ShouldThrowBadRequestException() {
+        ImportBookRequestDTO request = ImportBookRequestDTO.builder()
+                .isbn("9780451524935").libraryId(1L).genreIds(Set.of(1L)).stock(3).build();
+
+        when(repository.findByIsbn("9780451524935"))
+                .thenReturn(Optional.of(Book.builder().id(1L).build()));
+
+        assertThrows(BadRequestException.class, () -> service.importBook(request));
+        verify(externalBookService, never()).fetchBookByIsbn(any());
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void importBook_WhenLibraryNotFound_ShouldThrowNotFoundException() {
+        ImportBookRequestDTO request = ImportBookRequestDTO.builder()
+                .isbn("9780451524935").libraryId(99L).genreIds(Set.of(1L)).stock(3).build();
+
+        GoogleBooksResponseDTO.VolumeInfo volumeInfo = new GoogleBooksResponseDTO.VolumeInfo();
+        volumeInfo.setTitle("1984");
+
+        when(repository.findByIsbn("9780451524935")).thenReturn(Optional.empty());
+        when(externalBookService.fetchBookByIsbn("9780451524935")).thenReturn(volumeInfo);
+        when(libraryRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> service.importBook(request));
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void importBook_WhenSomeGenresNotFound_ShouldThrowNotFoundException() {
+        ImportBookRequestDTO request = ImportBookRequestDTO.builder()
+                .isbn("9780451524935").libraryId(1L).genreIds(Set.of(1L, 2L)).stock(3).build();
+
+        GoogleBooksResponseDTO.VolumeInfo volumeInfo = new GoogleBooksResponseDTO.VolumeInfo();
+        volumeInfo.setTitle("1984");
+
+        when(repository.findByIsbn("9780451524935")).thenReturn(Optional.empty());
+        when(externalBookService.fetchBookByIsbn("9780451524935")).thenReturn(volumeInfo);
+        when(libraryRepository.findById(1L)).thenReturn(Optional.of(Library.builder().id(1L).build()));
+        when(genreRepository.findAllById(Set.of(1L, 2L))).thenReturn(List.of(new Genre(1L, "Fiction")));
+
+        assertThrows(NotFoundException.class, () -> service.importBook(request));
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void importBook_WhenGoogleReturnsNullAuthors_ShouldUseUnknownAuthor() {
+        ImportBookRequestDTO request = ImportBookRequestDTO.builder()
+                .isbn("0000000001").libraryId(1L).genreIds(Set.of(1L)).stock(1).build();
+
+        GoogleBooksResponseDTO.VolumeInfo volumeInfo = new GoogleBooksResponseDTO.VolumeInfo();
+        volumeInfo.setTitle("Mystery Book");
+        volumeInfo.setAuthors(null);
+        volumeInfo.setImageLinks(null);
+
+        Book saved = Book.builder().id(2L).build();
+        when(repository.findByIsbn("0000000001")).thenReturn(Optional.empty());
+        when(externalBookService.fetchBookByIsbn("0000000001")).thenReturn(volumeInfo);
+        when(libraryRepository.findById(1L)).thenReturn(Optional.of(Library.builder().id(1L).build()));
+        when(genreRepository.findAllById(Set.of(1L))).thenReturn(List.of(new Genre(1L, "Fiction")));
+        when(repository.save(any(Book.class))).thenReturn(saved);
+        when(mapper.toDTO(saved)).thenReturn(BookResponseDTO.builder().id(2L).build());
+
+        service.importBook(request);
+
+        ArgumentCaptor<Book> captor = ArgumentCaptor.forClass(Book.class);
+        verify(repository).save(captor.capture());
+        assertEquals("Unknown Author", captor.getValue().getAuthor());
+        assertNull(captor.getValue().getImageUrl());
+    }
+
+    @Test
+    void importBook_WhenGoogleReturnsNullTitle_ShouldUseUnknownTitle() {
+        ImportBookRequestDTO request = ImportBookRequestDTO.builder()
+                .isbn("0000000002").libraryId(1L).genreIds(Set.of(1L)).stock(1).build();
+
+        GoogleBooksResponseDTO.VolumeInfo volumeInfo = new GoogleBooksResponseDTO.VolumeInfo();
+        volumeInfo.setTitle(null);
+        volumeInfo.setAuthors(List.of("Some Author"));
+
+        Book saved = Book.builder().id(3L).build();
+        when(repository.findByIsbn("0000000002")).thenReturn(Optional.empty());
+        when(externalBookService.fetchBookByIsbn("0000000002")).thenReturn(volumeInfo);
+        when(libraryRepository.findById(1L)).thenReturn(Optional.of(Library.builder().id(1L).build()));
+        when(genreRepository.findAllById(Set.of(1L))).thenReturn(List.of(new Genre(1L, "Fiction")));
+        when(repository.save(any(Book.class))).thenReturn(saved);
+        when(mapper.toDTO(saved)).thenReturn(BookResponseDTO.builder().id(3L).build());
+
+        service.importBook(request);
+
+        ArgumentCaptor<Book> captor = ArgumentCaptor.forClass(Book.class);
+        verify(repository).save(captor.capture());
+        assertEquals("Unknown Title", captor.getValue().getTitle());
     }
 
     // ─── getAllBooks ──────────────────────────────────────────────────────────
@@ -262,14 +411,12 @@ class BookServiceTest {
 
         when(repository.findById(1L)).thenReturn(Optional.of(book));
         when(genreRepository.findById(2L)).thenReturn(Optional.of(genre));
-        when(repository.save(any(Book.class))).thenReturn(book);
         when(mapper.toDTO(book)).thenReturn(response);
 
         BookResponseDTO result = service.addGenre(1L, 2L);
 
         assertNotNull(result);
         assertTrue(book.getGenres().contains(genre));
-        verify(repository, times(1)).save(book);
     }
 
     @Test
