@@ -42,21 +42,30 @@ Library ──< Book >── Genre
 
 ## 🚀 Cómo Empezar
 
-### Requisitos Previos
+### Prerrequisitos
 
 - **Docker & Docker Compose**
 
-### Ejecutar con Docker Compose
+### Instalación y Configuración
 
-```bash
-git clone https://github.com/matiassddiaz/library-api.git
-cd library-api
-docker-compose up --build
-```
+1. **Clonar el repositorio**
+   ```bash
+   git clone https://github.com/matiassddiaz/library-api.git
+   cd library-api
+   ```
 
-La API estará disponible en `http://localhost:8080`.
+2. **Variables de Entorno**
+   Antes de ejecutar el proyecto, es necesario configurar las variables de entorno.
+   Copiá el archivo de ejemplo y completá con tus valores reales (el secreto JWT y la API key de Google Books):
+   ```bash
+   cp .env.example .env
+   ```
 
----
+3. **Ejecutar con Docker Compose**
+   ```bash
+   docker-compose up --build
+   ```
+   La API estará disponible en `http://localhost:8080`.
 
 ## 🔐 Autenticación y Autorización
 

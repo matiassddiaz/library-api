@@ -46,16 +46,26 @@ Library ──< Book >── Genre
 
 - **Docker & Docker Compose**
 
-### Run with Docker Compose
+### Installation & Setup
 
-```bash
-git clone https://github.com/matiassddiaz/library-api.git
-cd library-api
-docker-compose up --build
-```
-The API will be available at `http://localhost:8080`.
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/matiassddiaz/library-api.git
+   cd library-api
+   ```
 
----
+2. **Environment Variables**
+   Before running the project, you need to set up your environment variables.
+   Copy the example file and replace the placeholder values with your own (JWT secret and Google Books API key):
+   ```bash
+   cp .env.example .env
+   ```
+
+3. **Run with Docker Compose**
+   ```bash
+   docker-compose up --build
+   ```
+   The API will be available at `http://localhost:8080`.
 
 ## 🔐 Authentication & Authorization
 
